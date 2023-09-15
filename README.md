@@ -46,7 +46,7 @@ Windows 10, Ubuntu 16.04/18.04/20.04, ARM Linux 32/64 bit (Raspberry Pi 4B, Jets
 ### Get source code
 
 ```bash
-git clone https://github.com/OrbbecDeveloper/OrbbecSDK.git
+git clone https://github.com/orbbec/OrbbecSDK.git
 ```
 
 ### Environment setup
