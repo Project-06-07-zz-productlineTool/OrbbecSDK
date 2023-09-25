@@ -1,10 +1,13 @@
 # OrbbecSDK
 
-![stability](https://img.shields.io/badge/stability-stable-green) ![version](https://img.shields.io/badge/version-1.7.4-green)
+![stability](https://img.shields.io/badge/stability-unstable-red) ![version](https://img.shields.io/badge/version-bolt_1.7.4_dev-orange)
+
+**Attention: This branch contains unstable code for new Orbbec products, will be delete in the future. If you want to use the stable version, please switch to the 1.7.x branch.**
 
 The Orbbec 3D camera product software development kit，fully supports UVC, realizes driver-free plug-and-play, provides low-level and high-level simple and easy-to-use APIs, and helps developers use it flexibly in different scenarios.
 
 Besides, this SDK is compatible with Orbbec's original OpenNI protocol devices through built-in code, so that developers can completely migrate to OrbbecSDK to support Orbbec's new generation of products and old products with one set of code.
+
 
 ## What is included in the repository
 
@@ -103,7 +106,7 @@ cd OrbbecSDK/build/bin # build output dir
 * [OrbbecViewer_v1.7.4_202309131846_win_x64_release.zip](https://github.com/orbbec/OrbbecSDK/releases/download/v1.7.4/OrbbecViewer_v1.7.4_202309131846_win_x64_release.zip)
 * [OrbbecViewer_v1.7.4_202309131054_linux_x64_release.zip](https://github.com/orbbec/OrbbecSDK/releases/download/v1.7.4/OrbbecViewer_v1.7.4_202309131054_linux_x64_release.zip)
 * [OrbbecViewer_v1.7.4_202309131859_arm64_release.zip](https://github.com/orbbec/OrbbecSDK/releases/download/v1.7.4/OrbbecViewer_v1.7.4_202309131859_arm64_release.zip)
-  
+
 ## Documents
 
 * API Reference: Use browse to open [doc/api/English/index.html](doc/api/English/index.html)

@@ -1,5 +1,7 @@
 # OrbbecSDK
-![stability](https://img.shields.io/badge/stability-stable-green) ![version](https://img.shields.io/badge/version-1.7.4-green)
+![stability](https://img.shields.io/badge/stability-unstable-red) ![version](https://img.shields.io/badge/version-bolt_1.7.4_dev-orange)
+
+**注意：本分支包含不稳定的代码，用于测试奥比的新相机产品。该分支会在将来删除，请使用 1.7.x 稳定分支。**
 
 Orbbec 3D 相机产品软件开发套件，全面支持 UVC，实现免驱动即插即用，提供低层和高层简单易用的 API，帮助开发者在不同场景下灵活使用。
 
