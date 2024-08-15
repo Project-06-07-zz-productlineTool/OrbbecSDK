@@ -6,15 +6,169 @@
 #include <fstream> // for file operations  
 #include <iostream> // for output  
 
+std::shared_ptr<ob::Context>  ctx;
+std::shared_ptr<ob::Device>   device;
+std::recursive_mutex          deviceMutex;
+std::shared_ptr<ob::Pipeline> pipeline;
+// ob::Pipeline pipeline;
+
+void switchLaserOff() {
+    std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+    if(device) {
+        try {
+            if(device->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ)) {
+                // bool value = device->getBoolProperty(OB_PROP_LASER_BOOL);
+                bool value = true;
+                if(device->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_WRITE)) {
+                    device->setBoolProperty(OB_PROP_LASER_BOOL, !value);
+
+                    // if(!value) {
+                    //     std::cout << "laser turn on!" << std::endl;
+                    // }
+                    // else {
+                    //     std::cout << "laser turn off!" << std::endl;
+                    // }
+                }
+            }
+            else {
+                std::cerr << "Laser switch property is not supported." << std::endl;
+            }
+        }
+        catch(ob::Error &e) {
+            std::cerr << "Laser switch property is not supported." << std::endl;
+        }
+    }
+}
+
+void switchLDPOff() {
+    std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+    if(device) {
+        try {
+            if(device->isPropertySupported(OB_PROP_LDP_BOOL, OB_PERMISSION_READ)) {
+                // bool value = device->getBoolProperty(OB_PROP_LDP_BOOL);
+                bool value = true;
+                if(device->isPropertySupported(OB_PROP_LDP_BOOL, OB_PERMISSION_WRITE)) {
+                    device->setBoolProperty(OB_PROP_LDP_BOOL, !value);
+
+                    // if(!value) {
+                    //     std::cout << "LDP turn on!" << std::endl;
+                    // }
+                    // else {
+                    //     std::cout << "LDP turn off!" << std::endl;
+                    // }
+                    // std::cout << "Attention: For some models, it is require to restart depth stream after turn on/of LDP. Input \"stream\" command "
+                    //              "to restart stream!"
+                    //           << std::endl;
+                }
+            }
+            else {
+                std::cerr << "LDP switch property is not supported." << std::endl;
+            }
+        }
+        catch(ob::Error &e) {
+            std::cerr << "LDP switch property is not supported." << std::endl;
+        }
+    }
+}
+
+// Device connection callback
+void handleDeviceConnected(std::shared_ptr<ob::DeviceList> devices) {
+    // Get the number of connected devices
+    if(devices->deviceCount() == 0) {
+        return;
+    }
+
+    const auto deviceCount = devices->deviceCount();
+    for(uint32_t i = 0; i < deviceCount; i++) {
+        std::string deviceSN = devices->serialNumber(i);
+        std::cout << "Found device connected, SN: " << deviceSN << std::endl;
+    }
+
+    std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+    if(!device) {
+        // open default device (device index=0)
+        device   = devices->getDevice(0);
+        pipeline = std::make_shared<ob::Pipeline>(device);
+        // pipeline = ob::Pipeline(device);
+        std::cout << "Open device success, SN: " << devices->serialNumber(0) << std::endl;
+
+        // // try to switch depth work mode
+        // switchDepthWorkMode();
+
+        // // try turn off hardware disparity to depth converter (switch to software d2d)
+        // turnOffHwD2d();
+
+        // // set depth unit
+        // setDepthUnit();
+
+        // // set depth value range
+        // setDepthValueRange();
+
+        // // set depth soft filter
+        // setDepthSoftFilter();
+
+        // start stream
+        // startStream();
+    }
+}
+
+// Device disconnect callback
+void handleDeviceDisconnected(std::shared_ptr<ob::DeviceList> disconnectList) {
+    std::string currentDevSn = "";
+    {
+        std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+        if(device) {
+            std::shared_ptr<ob::DeviceInfo> devInfo = device->getDeviceInfo();
+            currentDevSn                            = devInfo->serialNumber();
+        }
+    }
+    const auto deviceCount = disconnectList->deviceCount();
+    for(uint32_t i = 0; i < deviceCount; i++) {
+        std::string deviceSN = disconnectList->serialNumber(i);
+        std::cout << "Device disconnected, SN: " << deviceSN << std::endl;
+        if(currentDevSn == deviceSN) {
+            device.reset();    // release device
+            pipeline.reset();  // release pipeline
+            std::cout << "Current device disconnected" << std::endl;
+        }
+    }
+}
+
 int main(int argc, char **argv) try {  
-    // Create a pipeline with default device  
-    ob::Pipeline pipe;  
+
+        // Set log severity, disable log, please set OB_LOG_SEVERITY_OFF.
+    ob::Context::setLoggerSeverity(OB_LOG_SEVERITY_ERROR);
+
+    // Create ob:Context.
+    ctx = std::make_shared<ob::Context>();
+
+    // Register device callback
+    ctx->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
+        handleDeviceDisconnected(removedList);
+        handleDeviceConnected(addedList);
+    });
+
+    // Query the list of connected devices.
+    std::shared_ptr<ob::DeviceList> devices = ctx->queryDeviceList();
+
+    // Handle connected devices（and open one device）
+    handleDeviceConnected(devices);
+
+    if(!device) {
+        std::cout << "Waiting for connect device...";
+        while(!device) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+
+    // // Create a pipeline with default device  
+    // ob::Pipeline pipeline;  
 
     // Configure which streams to enable or disable for the Pipeline by creating a Config  
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();  
 
     // Get the ir_left camera configuration list  
-    auto irLeftProfiles = pipe.getStreamProfileList(OB_SENSOR_IR_LEFT);  
+    auto irLeftProfiles = pipeline->getStreamProfileList(OB_SENSOR_IR_LEFT);  
 
     if (irLeftProfiles == nullptr) {  
         std::cerr << "The obtained IR_Left resolution list is NULL. For monocular structured light devices, try opening the IR data stream using the IR example. " << std::endl;  
@@ -31,7 +185,7 @@ int main(int argc, char **argv) try {
     }  
 
     // Get the ir_right camera configuration list  
-    auto irRightProfiles = pipe.getStreamProfileList(OB_SENSOR_IR_RIGHT);  
+    auto irRightProfiles = pipeline->getStreamProfileList(OB_SENSOR_IR_RIGHT);  
 
     // Open the default profile of IR_RIGHT Sensor  
     try {  
@@ -43,7 +197,7 @@ int main(int argc, char **argv) try {
     }  
 
     // Start the pipeline with config  
-    pipe.start(config);  
+    pipeline->start(config);  
 
     // Create a window for rendering  
     Window app("DoubleInfraredViewer", 1280, 800, RENDER_ONE_ROW);  
@@ -53,7 +207,9 @@ int main(int argc, char **argv) try {
     int frameCount = 0;  
     while (app) {  
         // Wait for frameset  
-        auto frameSet = pipe.waitForFrames(100);  
+        switchLaserOff();
+        switchLDPOff();
+        auto frameSet = pipeline->waitForFrames(100);  
         if (frameSet == nullptr) {  
             continue;  
         }  
@@ -71,7 +227,7 @@ int main(int argc, char **argv) try {
             std::cout << "left ir frame or right ir frame is null." << std::endl;  
             continue;  
         }  
-
+        
         // Render the frames in the window  
         app.addToRender({leftFrame, rightFrame});  
 
@@ -95,7 +251,7 @@ int main(int argc, char **argv) try {
     }  
 
     // Stop the pipeline  
-    pipe.stop();  
+    pipeline->stop();  
     return 0;  
 
 } catch (ob::Error &e) {  
