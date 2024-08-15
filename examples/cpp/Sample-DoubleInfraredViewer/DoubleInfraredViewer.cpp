@@ -234,10 +234,10 @@ int main(int argc, char **argv) try {
         // Save the leftFrame image only once  
         if (!saved) {  
             // Prepare to save leftFrame data  
-            auto frameData = leftFrame->metadata();   
+            auto frameData = leftFrame->data();   
             auto width = 1280;
             auto height = 800;
-            size_t frameSize = leftFrame->metadataSize();  
+            size_t frameSize = leftFrame->dataSize();  
 
             // Save the image as JPEG using stb_image_write  
             if (stbi_write_jpg("left_frame_image.jpg", width, height, 1, frameData, 100)) {  
