@@ -12,6 +12,36 @@ std::recursive_mutex          deviceMutex;
 std::shared_ptr<ob::Pipeline> pipeline;
 // ob::Pipeline pipeline;
 
+int32_t ir_exposure_value_ = 18000;
+int32_t ir_gain_value_ = 15000;
+
+void printfIrExposuer()
+{
+    int32_t irExposure = device->getIntProperty(OB_PROP_IR_EXPOSURE_INT);
+    std::cerr << "IR exposuer value is " << irExposure << std::endl;
+}
+
+void printfIrGain()
+{
+    int32_t irGain = device->getIntProperty(OB_PROP_IR_GAIN_INT);
+    std::cerr << "IR Gain value is " << irGain << std::endl;
+
+}
+
+void setIrExposuerGain(int32_t export_value, int32_t gain_value) {
+  std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+  if (device) {
+    try {
+      // 首先关掉 AE
+      device->setBoolProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, false);
+      device->setIntProperty(OB_PROP_IR_EXPOSURE_INT, export_value);
+      device->setIntProperty(OB_PROP_IR_GAIN_INT, gain_value);
+    } catch (ob::Error &e) {
+      std::cerr << "IR setIrExposuerGain is not supported." << std::endl;
+    }
+  }
+}
+
 void switchLaserOff() {
     std::unique_lock<std::recursive_mutex> lk(deviceMutex);
     if(device) {
@@ -201,14 +231,18 @@ int main(int argc, char **argv) try {
 
     // Create a window for rendering  
     Window app("DoubleInfraredViewer", 1280, 800, RENDER_ONE_ROW);  
-
     bool saved = false; // Flag to check if the image has been saved  
-    
-    int frameCount = 0;  
+    int frameCount = 0; 
     while (app) {  
         // Wait for frameset  
+        setIrExposuerGain(ir_exposure_value_,ir_gain_value_);
+
         switchLaserOff();
         switchLDPOff();
+        
+        // printfIrExposuer();
+        // printfIrGain();
+
         auto frameSet = pipeline->waitForFrames(100);  
         if (frameSet == nullptr) {  
             continue;  
@@ -231,23 +265,23 @@ int main(int argc, char **argv) try {
         // Render the frames in the window  
         app.addToRender({leftFrame, rightFrame});  
 
-        // Save the leftFrame image only once  
-        if (!saved) {  
-            // Prepare to save leftFrame data  
-            auto frameData = leftFrame->data();   
-            auto width = 1280;
-            auto height = 800;
-            size_t frameSize = leftFrame->dataSize();  
+        // // Save the leftFrame image only once  
+        // if (!saved) {  
+        //     // Prepare to save leftFrame data  
+        //     auto frameData = leftFrame->data();   
+        //     auto width = 1280;
+        //     auto height = 800;
+        //     size_t frameSize = leftFrame->dataSize();  
 
-            // Save the image as JPEG using stb_image_write  
-            if (stbi_write_jpg("left_frame_image.jpg", width, height, 1, frameData, 100)) {  
-                std::cout << "Saved left frame image to left_frame_image.jpg" << std::endl;  
-                saved = true; // Mark as saved  
-            } else {  
-                std::cerr << "Failed to save the image" << std::endl;  
-            }  
-            break; // Exit the loop after saving the image  
-        }  
+        //     // Save the image as JPEG using stb_image_write  
+        //     if (stbi_write_jpg("left_frame_image.jpg", width, height, 1, frameData, 100)) {  
+        //         std::cout << "Saved left frame image to left_frame_image.jpg" << std::endl;  
+        //         saved = true; // Mark as saved  
+        //     } else {  
+        //         std::cerr << "Failed to save the image" << std::endl;  
+        //     }  
+        //     break; // Exit the loop after saving the image  
+        // }  
     }  
 
     // Stop the pipeline  
