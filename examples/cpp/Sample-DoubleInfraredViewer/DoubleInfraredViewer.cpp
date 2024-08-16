@@ -240,8 +240,8 @@ int main(int argc, char **argv) try {
         switchLaserOff();
         switchLDPOff();
         
-        // printfIrExposuer();
-        // printfIrGain();
+        printfIrExposuer();
+        printfIrGain();
 
         auto frameSet = pipeline->waitForFrames(100);  
         if (frameSet == nullptr) {  
@@ -263,25 +263,36 @@ int main(int argc, char **argv) try {
         }  
         
         // Render the frames in the window  
-        app.addToRender({leftFrame, rightFrame});  
+        app.addToRender({leftFrame, rightFrame});
 
-        // // Save the leftFrame image only once  
-        // if (!saved) {  
-        //     // Prepare to save leftFrame data  
-        //     auto frameData = leftFrame->data();   
-        //     auto width = 1280;
-        //     auto height = 800;
-        //     size_t frameSize = leftFrame->dataSize();  
+        // Save the leftFrame image only once
+        if (!saved) {
+          // Prepare to save leftFrame data
+          auto frameData = leftFrame->data();
+          auto width = 1280;
+          auto height = 800;
+          size_t frameSize = leftFrame->dataSize();
 
-        //     // Save the image as JPEG using stb_image_write  
-        //     if (stbi_write_jpg("left_frame_image.jpg", width, height, 1, frameData, 100)) {  
-        //         std::cout << "Saved left frame image to left_frame_image.jpg" << std::endl;  
-        //         saved = true; // Mark as saved  
-        //     } else {  
-        //         std::cerr << "Failed to save the image" << std::endl;  
-        //     }  
-        //     break; // Exit the loop after saving the image  
-        // }  
+          // Save the image as JPEG using stb_image_write
+          if (stbi_write_jpg("01_left_frame_image.jpg", width, height, 1, frameData, 100)) {
+            std::cout << "Saved left frame image to left_frame_image.jpg" << std::endl;
+            saved = true;  // Mark as saved
+          } else {
+            std::cerr << "Failed to save the left_frame_image" << std::endl;
+          }
+
+          frameData = rightFrame->data();
+
+          // Save the image as JPEG using stb_image_write
+          if (stbi_write_jpg("02_right_frame_image.jpg", width, height, 1, frameData, 100)) {
+            std::cout << "Saved right frame image to right_frame_image.jpg" << std::endl;
+            saved = true;  // Mark as saved
+          } else {
+            std::cerr << "Failed to save the right_frame_image" << std::endl;
+          }
+
+          break;  // Exit the loop after saving the image
+        }
     }  
 
     // Stop the pipeline  
