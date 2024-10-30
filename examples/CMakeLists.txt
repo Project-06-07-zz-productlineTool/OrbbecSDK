@@ -6,13 +6,13 @@ if(UNIX)
 endif()
 
 if(NOT DEFINED OrbbecSDK_FOUND)
-    # set(OrbbecSDK_DIR "path/to/OrbbecSDK/lib" )
+    set(OrbbecSDK_DIR "D:/02_zz_gitlab/14-tof-guangban-test/OrbbecSDK/lib")
     message(STATUS "OrbbecSDK_DIR: ${OrbbecSDK_DIR}")
     find_package(OrbbecSDK REQUIRED)
 endif()
 
 # find opencv
-# set(OpenCV_DIR "your/path/to/opencv/lib")
+set(OpenCV_DIR "E:/02-software-install/02-opencv/opencv/build/x64/vc16/lib")
 find_package(OpenCV QUIET)
 
 if(UNIX)
@@ -22,7 +22,7 @@ if(UNIX)
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 endif()
 
-add_subdirectory(c)
+# add_subdirectory(c)
 add_subdirectory(cpp)
 
 install(DIRECTORY
